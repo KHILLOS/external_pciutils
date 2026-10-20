@@ -4,6 +4,7 @@ package {
 
 license {
     name: "external_pciutils_license",
+    visibility: [":__subpackages__"],
     license_kinds: ["SPDX-license-identifier-GPL-2.0-or-later"],
     license_text: ["COPYING"],
 }
@@ -12,11 +13,29 @@ genrule {
     name: "pciutils_config_h",
     cmd: "cd $(genDir) && " +
          "cat > config.h <<'EOF'\n" +
+         "#define PCI_CONFIG_H\n" +
+         "#define PCI_ARCH_x86 1\n" +
+         "#define PCI_ARCH_x86_64 1\n" +
+         "#define PCI_OS_LINUX\n" +
+         "#define PCI_HAVE_PM_LINUX_SYSFS\n" +
+         "#define PCI_HAVE_PM_LINUX_PROC\n" +
+         "#define PCI_HAVE_PM_MMIO_CONF\n" +
+         "#define PCI_HAVE_PM_ECAM\n" +
+         "#define PCI_HAVE_LINUX_BYTEORDER_H\n" +
+         "#define PCI_HAVE_PM_INTEL_CONF\n" +
+         "#define PCI_HAVE_64BIT_ADDRESS\n" +
+         "#define PCI_HAVE_PM_DUMP\n" +
          "#define PCI_COMPRESSED_IDS 0\n" +
-         "#define PCI_HAVE_PM_INTEL_CONF 1\n" +
-         "#define PCI_HAVE_LIBKMO 1\n" +
-         "#define PCI_VERSION \"3.15.0\"\n" +
-         "#define PCI_IDS_PATH \"/vendor/etc/pci.ids\"\n" +
+         "#define PCI_IDS \"pci.ids\"\n" +
+         "#define PCI_PATH_IDS_DIR \"/vendor/etc\"\n" +
+         "#define PCI_PATH_PROC_BUS_PCI \"/proc/bus/pci\"\n" +
+         "#define PCI_PATH_SYS_BUS_PCI \"/sys/bus/pci\"\n" +
+         "#define PCI_PATH_DEVMEM_DEVICE \"/dev/mem\"\n" +
+         "#define PCI_PATH_ACPI_MCFG \"/sys/firmware/acpi/tables/MCFG\"\n" +
+         "#define PCI_PATH_EFI_SYSTAB \"/sys/firmware/efi/systab\"\n" +
+         "#define PCI_USE_LIBKMOD\n" +
+         "#define PCI_USE_DNS\n" +
+         "#define PCILIB_VERSION \"3.15.0\"\n" +
          "EOF\n",
     out: ["config.h"],
 }
@@ -37,30 +56,16 @@ cc_library_static {
         "lib/sysfs.c",
         "lib/version.c",
     ],
-    export_include_dirs: ["lib"],
-    cflags: [
-        "-Werror",
-        "-Wall",
-        "-Wextra",
-        "-Wno-unused-parameter",
-        "-D_GNU_SOURCE",
-        "-D_FILE_OFFSET_BITS=64",
-    ],
     arch: {
         x86: {
             srcs: ["lib/i386-ports.c"],
         },
+        x86_64: {
+            srcs: ["lib/i386-ports.c"],
+        },
     },
-    static_libs: ["libkmod"],
-    generated_headers: ["pciutils_config_h"],
-    vendor_available: true,
-    host_supported: true,
-}
-
-cc_binary {
-    name: "lspci",
-    srcs: ["util/lspci.c"],
-    static_libs: ["libpci"],
+    export_include_dirs: ["lib"],
+    export_generated_headers: ["pciutils_config_h"],
     cflags: [
         "-Werror",
         "-Wall",
@@ -69,7 +74,46 @@ cc_binary {
         "-D_GNU_SOURCE",
         "-D_FILE_OFFSET_BITS=64",
     ],
-    vendor: true,
+    static_libs: ["libkmod"],
+    generated_headers: ["pciutils_config_h"],
+    vendor_available: true,
+    host_supported: true,
+    product_available: true,
+    ramdisk_available: true,
+    vendor_ramdisk_available: true,
+    recovery_available: true,
+    native_bridge_supported: true,
+    target: {
+        linux_bionic: {
+            enabled: true,
+        },
+        windows: {
+            enabled: true,
+        },
+    },
+    min_sdk_version: "29",
+    sdk_version: "current",
+    apex_available: [
+        "//apex_available:anyapex",
+        "//apex_available:platform",
+    ],
+    visibility: ["//visibility:public"],
+}
+
+cc_binary {
+    name: "lspci",
+    srcs: ["lspci.c"],
+    static_libs: ["libpci", "libkmod", "libz"],
+    cflags: [
+        "-Werror",
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-D_GNU_SOURCE",
+        "-D_FILE_OFFSET_BITS=64",
+    ],
+    system_ext_specific: true,
+    generated_headers: ["pciutils_config_h"],
 }
 
 genrule {
