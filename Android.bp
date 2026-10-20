@@ -1,0 +1,81 @@
+package {
+    default_applicable_licenses: ["external_pciutils_license"],
+}
+
+license {
+    name: "external_pciutils_license",
+    license_kinds: ["SPDX-license-identifier-GPL-2.0-or-later"],
+    license_text: ["COPYING"],
+}
+
+genrule {
+    name: "pciutils_config_h",
+    cmd: "cd $(genDir) && " +
+         "cat > config.h <<'EOF'\n" +
+         "#define PCI_COMPRESSED_IDS 0\n" +
+         "#define PCI_HAVE_PM_INTEL_CONF 1\n" +
+         "#define PCI_HAVE_LIBKMO 1\n" +
+         "#define PCI_VERSION \"3.15.0\"\n" +
+         "#define PCI_IDS_PATH \"/vendor/etc/pci.ids\"\n" +
+         "EOF\n",
+    out: ["config.h"],
+}
+
+cc_library_static {
+    name: "libpci",
+    srcs: [
+        "lib/access.c",
+        "lib/bfsort.c",
+        "lib/header.c",
+        "lib/ids.c",
+        "lib/match.c",
+        "lib/name.c",
+        "lib/pci.c",
+        "lib/scan.c",
+        "lib/rom.c",
+        "lib/strbuf.c",
+        "lib/sysfs.c",
+        "lib/version.c",
+    ],
+    export_include_dirs: ["lib"],
+    cflags: [
+        "-Werror",
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-D_GNU_SOURCE",
+        "-D_FILE_OFFSET_BITS=64",
+    ],
+    arch: {
+        x86: {
+            srcs: ["lib/i386-ports.c"],
+        },
+    },
+    static_libs: ["libkmod"],
+    generated_headers: ["pciutils_config_h"],
+    vendor_available: true,
+    host_supported: true,
+}
+
+cc_binary {
+    name: "lspci",
+    srcs: ["util/lspci.c"],
+    static_libs: ["libpci"],
+    cflags: [
+        "-Werror",
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-D_GNU_SOURCE",
+        "-D_FILE_OFFSET_BITS=64",
+    ],
+    vendor: true,
+}
+
+genrule {
+    name: "pci_ids_uncompressed",
+    cmd: "cp $(location external_pciutils/pci.ids) $(out)",
+    srcs: ["pci.ids"],
+    out: ["pci.ids"],
+    host_supported: true,
+}
