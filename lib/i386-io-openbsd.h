@@ -5,6 +5,9 @@
  *
  *	Can be freely distributed and used under the terms of the GNU GPL.
  */
+/*
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
 
 #include <sys/types.h>
 #include <machine/sysarch.h>

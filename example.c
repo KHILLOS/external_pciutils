@@ -4,6 +4,9 @@
  *	Written by Martin Mares and put to public domain. You can do
  *	with it anything you want, but I don't give you any warranty.
  */
+/*
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
 
 #include <stdio.h>
 

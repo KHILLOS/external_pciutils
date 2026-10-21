@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
 const char *win32_strerror(DWORD win32_error_id);
 USHORT win32_get_process_machine(void);
 BOOL win32_is_non_nt_system(void);
